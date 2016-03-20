@@ -2,19 +2,19 @@ import React, { Component } from 'react';
 
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux'
-import { noop } from './actions/noop';
+import { authorizeUser } from './actions/user';
 
 @connect( state => ({
   state
 }),
 dispatch => bindActionCreators({ 
-  noop 
+  authorizeUser 
 }, dispatch))
 
 
 export default class Authorize extends Component {
   handleAuthorize() {
-    this.props.noop();
+    this.props.authorizeUser();
     console.log('authorize');
   }
 
