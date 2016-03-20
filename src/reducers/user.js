@@ -1,10 +1,14 @@
 import { 
   USER_INFO,
   USER_INFO_SUCCESSFUL,
-  USER_INFO_FAILURE
+  USER_INFO_FAILURE,
+
+  DROPBOX_OAUTH
 } from '../constants';
 
 const initialState = {
+  authorized: false,
+
   info: null,
   infoLoaded: false,
   infoLoading: false
@@ -12,6 +16,12 @@ const initialState = {
 
 export default (state = initialState, action) => {
   switch(action.type) {
+    case DROPBOX_OAUTH:
+      return {
+        ...state,
+        authorized: true
+      };
+
     case USER_INFO:
       return {
         ...state,

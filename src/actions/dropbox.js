@@ -1,6 +1,5 @@
 import {
-  DROPBOX_OAUTH,
-  DB_ACCOUNT_INFO
+  DROPBOX_OAUTH
 } from '../constants';
 
 export const dropboxOauth = config => ({
