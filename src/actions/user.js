@@ -1,27 +1,32 @@
 import {
-  USER_AUTHORIZE,
-  USER_AUTHORIZE_SUCCESSFUL,
-  USER_AUTHORIZE_FAILURE
+  USER_INFO,
+  USER_INFO_SUCCESSFUL,
+  USER_INFO_FAILURE
 } from '../constants';
 
-import { authorize } from '../utils/dropbox';
+import { authorize, getAccountInfo } from '../utils/dropbox';
 
-const userAuthorize = () => ({ type: USER_AUTHORIZE });
-const userAuthorizeSuccessful = value => ({ type: USER_AUTHORIZE_SUCCESSFUL, value });
-const userAuthorizeFailure = error => ({ type: USER_AUTHORIZE_FAILURE, error });
+const userInfo = () => ({ type: USER_INFO });
+const userInfoSuccessful = value => ({ type: USER_INFO_SUCCESSFUL, value });
+const userInfoFailure = error => ({ type: USER_INFO_FAILURE, error });
+
+export const userGetInfo = () => (
+  (dispatch, getState) => {
+    dispatch(userInfo());
+
+    const { configLoaded, config } = getState().dropbox;
+
+    if (!configLoaded) return dispatch(userInfoFailure('Invalid DB config'));
+
+    getAccountInfo(config)
+    .then(res => dispatch(userInfoSuccessful(res)),
+          err => dispatch(userInfoFailure(err)));
+
+  }
+);
 
 export const authorizeUser = () => (
-  (dispatch, getState) => {
-    dispatch(userAuthorize());
-
-    authorize().then(
-      value => {
-        dispatch(userAuthorizeSuccessful(value));
-      },
-      err => {
-        dispatch(userAuthorizeFailure(err));
-      }
-    );
-
+  () => {
+    authorize();
   }
 )

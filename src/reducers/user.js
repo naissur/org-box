@@ -1,42 +1,42 @@
 import { 
-  USER_AUTHORIZE,
-  USER_AUTHORIZE_SUCCESSFUL,
-  USER_AUTHORIZE_FAILURE
+  USER_INFO,
+  USER_INFO_SUCCESSFUL,
+  USER_INFO_FAILURE
 } from '../constants';
 
 const initialState = {
-  authorized: false,
-  authorizing: false,
-  data: null
+  info: null,
+  infoLoaded: false,
+  infoLoading: false
 };
 
 export default (state = initialState, action) => {
   switch(action.type) {
-    case USER_AUTHORIZE:
+    case USER_INFO:
       return {
         ...state,
-        authorizing: true,
-        authorized: false,
-        data: null
+        infoLoading: true,
+        infoLoaded: false,
+        info: null
       }
 
-    case USER_AUTHORIZE_SUCCESSFUL:
+    case USER_INFO_SUCCESSFUL:
       return {
         ...state,
-        authorizing: false,
-        authorized: true,
-        data: action.value
+        infoLoading: false,
+        infoLoaded: true,
+        info: action.value
       }
 
-    case USER_AUTHORIZE_FAILURE:
+    case USER_INFO_FAILURE:
       return {
         ...state,
-        authorizing: false,
-        authorized: false,
-        data: null
+        infoLoading: false,
+        infoLoaded: false,
+        info: null
       }
 
     default:
-      return initialState;
+      return state;
   }
 }
