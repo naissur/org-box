@@ -4,16 +4,24 @@ import {
   USER_AUTHORIZE_FAILURE
 } from '../constants';
 
+import { authorize } from '../utils/dropbox';
+
 const userAuthorize = () => ({ type: USER_AUTHORIZE });
-const userAuthorizeSuccessful = () => ({ type: USER_AUTHORIZE_SUCCESSFUL });
-const userAuthorizeFailure = () => ({ type: USER_AUTHORIZE_FAILURE });
+const userAuthorizeSuccessful = value => ({ type: USER_AUTHORIZE_SUCCESSFUL, value });
+const userAuthorizeFailure = error => ({ type: USER_AUTHORIZE_FAILURE, error });
 
 export const authorizeUser = () => (
   (dispatch, getState) => {
     dispatch(userAuthorize());
 
-    setTimeout(() => {
-      dispatch(userAuthorizeSuccessful());
-    }, 1000);
+    authorize().then(
+      value => {
+        dispatch(userAuthorizeSuccessful(value));
+      },
+      err => {
+        dispatch(userAuthorizeFailure(err));
+      }
+    );
+
   }
 )

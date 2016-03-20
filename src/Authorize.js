@@ -5,7 +5,7 @@ import { bindActionCreators } from 'redux'
 import { authorizeUser } from './actions/user';
 
 @connect( state => ({
-  state
+  user: state.user
 }),
 dispatch => bindActionCreators({ 
   authorizeUser 
@@ -15,7 +15,7 @@ dispatch => bindActionCreators({
 export default class Authorize extends Component {
   handleAuthorize() {
     this.props.authorizeUser();
-    console.log('authorize');
+    console.log(this.props.user);
   }
 
   render() {
@@ -24,6 +24,7 @@ export default class Authorize extends Component {
         <button onClick={::this.handleAuthorize}>
           Authorize
         </button>
+        { this.props.user.data }
       </div>
     );
   }

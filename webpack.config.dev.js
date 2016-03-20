@@ -21,11 +21,19 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin()
   ],
+  node: {
+    net: 'empty',
+    tls: 'empty',
+    dns: 'empty'
+  },
   module: {
     loaders: [{
       test: /\.js$/,
       loaders: ['babel'],
       include: path.join(__dirname, 'src')
+    },{
+      test: /\.json$/,
+      loader: 'json'
     }]
   }
 };
