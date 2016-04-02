@@ -8,3 +8,7 @@ export const DROPBOX_OAUTH = 'DROPBOX_OAUTH';
 export const FOLDER_GET = 'FOLDER_GET';
 export const FOLDER_GET_SUCCESS = 'FOLDER_GET_SUCCESS';
 export const FOLDER_GET_FAILURE = 'FOLDER_GET_FAILURE';
+
+export const FILE_GET = 'FILE_GET';
+export const FILE_GET_SUCCESS = 'FILE_GET_SUCCESS';
+export const FILE_GET_FAILURE = 'FILE_GET_FAILURE';

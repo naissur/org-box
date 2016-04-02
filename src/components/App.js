@@ -2,12 +2,13 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux'
 
-import { dropboxOauth } from './actions/dropbox';
+import { dropboxOauth } from '../actions/dropbox';
 
 const queryString = require('query-string');
 
 import UserInfo from './UserInfo';
 import Directory from './Directory';
+import FileView from './FileView';
 
 const CONFIG_STORAGE_KEY = 'DB_CONFIG';
 
@@ -41,9 +42,18 @@ export class App extends Component {
 
   render() {
     return (
-      <div>
-        <UserInfo />
-        <Directory />
+      <div style={{ fontFamily: 'sans-serif' }}>
+        <div>
+          <UserInfo />
+        </div>
+        <div style={{ }}>
+          <div style={{ display: 'inline-block', verticalAlign: 'top', width: '20%' }} >
+            <Directory />
+          </div>
+          <div style={{ display: 'inline-block', verticalAlign: 'top', width: '80%' }} >
+            <FileView />
+          </div>
+        </div>
       </div>
     );
   }

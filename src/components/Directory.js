@@ -2,22 +2,37 @@ import React, { Component } from 'react';
 
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux'
-import { authorizeUser, userGetInfo } from './actions/user';
-import { folderGet } from './actions/folder';
+import { authorizeUser, userGetInfo } from '../actions/user';
+import { folderGet } from '../actions/folder';
+import { fileGet } from '../actions/file';
 
 const path = require('path');
 
 
+const getEntryNavigationFunction = ({ tag, onNavigate, onViewFile }) => {
+  if (tag === 'file') {
+    return onViewFile;
+  }
+
+  if (tag === 'folder') {
+    return onNavigate;
+  }
+
+};
+
 /* eslint camelcase: 0 */
-const renderEntry = ({ entry, onNavigate }) => {
+const renderEntry = ({ entry, onNavigate, onViewFile }) => {
   const { path_lower, name, id } = entry;
+
+  const tag = entry['.tag'];
+  const navFunc = getEntryNavigationFunction({ tag, onNavigate, onViewFile });
 
   return (
     <div key={id}>
       <a href='#' onClick={
         ev => {
           ev.preventDefault();
-          onNavigate(path_lower);
+          navFunc(path_lower, name);
         }}
       >
         { name }
@@ -32,12 +47,18 @@ const renderEntry = ({ entry, onNavigate }) => {
   folderPath: state.folder.folderPath,
   folder: state.folder.folder,
   folderLoaded: state.folder.folderLoaded,
-  folderLoading: state.folder.folderLoading
+  folderLoading: state.folder.folderLoading,
+
+  filePath: state.file.filePath,
+  file: state.file.file,
+  fileLoaded: state.file.fileLoaded,
+  fileLoading: state.file.fileLoading
 }),
 dispatch => bindActionCreators({ 
   authorizeUser,
   userGetInfo,
-  folderGet
+  folderGet,
+  fileGet
 }, dispatch))
 export default class Directory extends Component {
   componentDidMount() {
@@ -50,6 +71,10 @@ export default class Directory extends Component {
 
   onNavigateEntry(path) {
     this.props.folderGet(path);
+  }
+
+  onViewFile(path, name) {
+    this.props.fileGet(path, name);
   }
 
   getUpPath() {
@@ -81,14 +106,16 @@ export default class Directory extends Component {
   }
 
   getHeader() {
+    const { folderPath } = this.props;
+
     return (
       <h3>
-        Directory { this.renderUp() }
+        { (folderPath === '' ? '/' : folderPath) } { this.renderUp() }
       </h3>
     );
   }
 
-  render() {
+  getContent() {
     const { user } = this.props;
     
     if (!user.authorized) return null;
@@ -97,12 +124,26 @@ export default class Directory extends Component {
 
     if (!folderLoaded && folderLoading) {
       return (
-        <div>
-          { this.getHeader() }
-          Loading folder...
-        </div>
+        'Loading...'
       );
     }
+
+
+    const { entries } = folder;
+
+    return (
+      entries.map(entry => renderEntry({ entry,
+                                          onNavigate : ::this.onNavigateEntry,
+                                          onViewFile : ::this.onViewFile }))
+    );
+  }
+
+  render() {
+    const { user } = this.props;
+    
+    if (!user.authorized) return null;
+
+    const { folderLoaded, folderLoading } = this.props;
 
     if (!folderLoaded && !folderLoading) {
       return (
@@ -110,14 +151,13 @@ export default class Directory extends Component {
       );
     }
 
-    const { entries } = folder;
-
     return (
-      <div>
+      <div style={{
+        padding: '10px 20px'
+      }} 
+      >
         { this.getHeader() }
-        <div>
-          {entries.map(entry => renderEntry({ entry, onNavigate : ::this.onNavigateEntry }))}
-        </div>
+        { this.getContent() }
       </div>
     );
   }

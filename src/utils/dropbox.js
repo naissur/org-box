@@ -1,5 +1,6 @@
-const DB_API_PREFIX = 'https://api.dropboxapi.com/1';
-const DB_API_V2_PREFIX = 'https://api.dropboxapi.com/2';
+const DB_API_CORE = 'https://api.dropboxapi.com/1';
+const DB_API_HTTP = 'https://api.dropboxapi.com/2';
+const DB_API_CONTENT = 'https://content.dropboxapi.com/1';
 
 const queryString = require('query-string');
 
@@ -20,7 +21,7 @@ export const authorize = () => {
 export const getAccountInfo = config => {
   return new Promise((resolve, reject) => {
     request
-    .get(`${ DB_API_PREFIX }/account/info`)
+    .get(`${ DB_API_CORE }/account/info`)
     .set(`Authorization`, `Bearer ${ config.access_token }`)
     .end((err, res) => {
       if (err) reject(res);
@@ -32,12 +33,24 @@ export const getAccountInfo = config => {
 export const getFolder = (config, path) => {
   return new Promise((resolve, reject) => {
     request
-    .post(`${ DB_API_V2_PREFIX }/files/list_folder`)
+    .post(`${ DB_API_HTTP }/files/list_folder`)
     .send({ path })
     .set(`Authorization`, `Bearer ${ config.access_token }`)
     .end((err, res) => {
       if (err) reject(res);
       resolve(JSON.parse(res.text));
+    });
+  });
+}
+
+export const getFile = (config, path) => {
+  return new Promise((resolve, reject) => {
+    request
+    .get(`${ DB_API_CONTENT }/files/auto/${ path }`)
+    .set(`Authorization`, `Bearer ${ config.access_token }`)
+    .end((err, res) => {
+      if (err) reject(res);
+      resolve(res.text);
     });
   });
 }
