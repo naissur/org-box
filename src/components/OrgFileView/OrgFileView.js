@@ -2,30 +2,57 @@ import React, { Component, PropTypes } from 'react';
 import { setPropTypes, compose, pure, setDisplayName, withReducer } from 'recompose';
 
 import org from 'org-mode-parser';
+import curry from 'curry'
+import { equals, map, prop, filter, reduce, all, assoc } from 'ramda';
 
-window.org = org;
 
 const NodeBody = ({ body }) => (
-  <div style={{ padding: '0px 16px', paddingBottom: '16px' }} >
-    { body.split('\n').map( (line, index) => (
-      <p key={index} >{line}</p>
-    ))}
+  <div style={{
+    padding: '0px 16px',
+    paddingBottom: '0px'
+  }} >
+    <div
+      style={{
+        borderLeft: '1px solid #999',
+        borderBottom: '1px solid #999'
+      }}
+    >
+      { body.split('\n').map( (line, index) => (
+        <p 
+          style={{
+            padding: '4px 12px'
+          }}
+          key={index}
+        >
+          {line}
+        </p>
+      ))}
+    </div>
   </div>
 );
 
-const NodeHead = ({ onClick, headline, level }) => {
-  const HN = `h${ level + 1 }`;
+const NodeHead = ({ onClick, headline, level, bodyCollapsed }) => {
+  const HN = `h${ level}`;
 
   return (
-    <HN style={{ padding:'4px 0px' }} {...{ onClick }} >{ headline }</HN>
+    <HN style={{
+      borderBottom: '1px solid #999',
+      borderTop: '1px solid #999',
+      borderLeft: '1px solid #999',
+      marginTop: '-1px',
+      padding:'4px 12px' }} {...{ onClick }}
+    >
+      { headline }
+      { bodyCollapsed ? (<span style={{ color: '#888' }}> ...</span>) : null }
+    </HN>
   );
 };
 
 const PureNode = ({ open, cycleVisibility, headline, level, body }) => (
-  <div style={{ paddingLeft: ((level - 1) * 32) }}>
+  <div style={{ paddingLeft: ((level - 1) * 16) }}>
     <div style={{ cursor: 'pointer' }}>
       <NodeHead {...{ headline, level }} 
-        onClick={cycleVisibility}
+        bodyCollapsed={!open} onClick={cycleVisibility}
       />
     </div>
 
@@ -40,7 +67,11 @@ const FOLDED = 'FOLDED';
 const CHILDREN = 'CHILDREN';
 const SUBTREE = 'SUBTREE';
 
-const getNextVisibility = curr => {
+const NODE_OPEN = 'NODE_OPEN';
+const NODE_FOLDED = 'NODE_FOLDED';
+const NODE_HIDDEN = 'NODE_HIDDEN';
+
+export const getNextVisibility = curr => {
   switch (curr) {
     case FOLDED: return CHILDREN;
     case CHILDREN: return SUBTREE;
@@ -49,28 +80,118 @@ const getNextVisibility = curr => {
   }
 }
 
-const cycleSubtreeVisibility= ({ node, nodes }) => ({ type: CYCLE_SUBTREE_VISIBILITY, payload: { node, nodes }});
+const cycleSubtreeVisibility= curry(
+  ({ node, nodes }) => ({ type: CYCLE_SUBTREE_VISIBILITY, payload: { node, nodes }})
+);
 
-const getSubtreeNodes = (nodes, node) => {
-  const ofd = new org.OrgQuery(nodes);
+const getSubtreeNodes = curry(
+  (nodes, node) => {
+    const ofd = new org.OrgQuery(nodes);
 
-  const subtree = ofd.selectSubtree(node);
-  const { allNodes } = subtree;
-  
-  return allNodes;
-}
+    const subtree = ofd.selectSubtree(node);
+    const { allNodes } = subtree;
+    
+    return allNodes;
+  }
+);
 
-const getCurrentSubtreeVisibility = subtree => {
-  console.log(subtree);
+const getSubtreeNodesKeys = curry(
+  (nodes, node) => 
+    compose(
+      map(prop('key')),
+      getSubtreeNodes(nodes)
+    )(node)
+);
 
-  // ...
-  return CHILDREN;
-}
+const getChildrenNodes = curry(
+  (nodes, node) => (
+    filter(
+      compose(equals(node.level + 1), prop('level'))
+    )(getSubtreeNodes(nodes, node))
+  )
+);
+
+const getChildrenNodesKeys = curry(
+  (nodes, node) => (
+    compose(
+      map(prop('key')),
+      getChildrenNodes(nodes)
+    )(node)
+  )
+);
+
+const getNextSubtreeVisibility = curry(
+  (visibilityTree, nodes, node) => {
+    const subtreeNodes = getSubtreeNodes(nodes, node);
+
+    const nodeKey = node.key;
+    const subtreeKeys = subtreeNodes.map(x => x.key);
+
+    const nodeFolded = (visibilityTree[nodeKey] === NODE_FOLDED);
+
+    if (nodeFolded) return CHILDREN;
+
+    const allOpen = compose(
+      all(equals(NODE_OPEN)),
+      map(key => visibilityTree[key])
+    )(subtreeKeys);
+
+    if (allOpen) return FOLDED;
+
+    const allChildrenOpen = compose(
+      all(equals(NODE_OPEN)),
+      map(key => (visibilityTree[key])),
+      getChildrenNodesKeys(nodes)
+    )(node);
+
+    if (allChildrenOpen) return SUBTREE;
+
+    return SUBTREE;
+  }
+);
 
 
-const setSubtreeVisibility = (subtreeNodes, nodes, nextVisibility) => {
-  return {};
-}
+const setNodesVisibility = curry(
+  (val, keys, currTree ) => (
+    reduce(
+      (res, key) => assoc(key, val, res),
+      currTree,
+      keys
+    )
+  )
+);
+
+const setSubtreeVisibility = curry(
+  (nodes, node, visibilityTree, nextVisibility) => {
+    const nodeKey = node.key;
+    const subtreeNodesKeys = getSubtreeNodesKeys(nodes, node);
+    const childrenNodesKeys = getChildrenNodesKeys(nodes, node);
+
+    switch (nextVisibility) {
+      case FOLDED:
+        return compose(
+          assoc(nodeKey, NODE_FOLDED),
+          setNodesVisibility(NODE_HIDDEN, subtreeNodesKeys)
+        )(visibilityTree);
+        
+      case CHILDREN:
+        return compose(
+          assoc(nodeKey, NODE_OPEN),
+          setNodesVisibility(NODE_FOLDED, childrenNodesKeys),
+          setNodesVisibility(NODE_HIDDEN, subtreeNodesKeys)
+        )(visibilityTree);
+        
+      case SUBTREE:
+        return compose(
+          assoc(nodeKey, NODE_OPEN),
+          setNodesVisibility(NODE_OPEN, subtreeNodesKeys)
+        )(visibilityTree);
+
+
+      default: return visibilityTree;
+    }
+  }
+);
 
 const visibilityReducer = (visibilityTree, action) => {
   const { payload } = action;
@@ -78,13 +199,11 @@ const visibilityReducer = (visibilityTree, action) => {
   switch (action.type) {
     case CYCLE_SUBTREE_VISIBILITY:
       const { node, nodes } = payload;
-      // TODO compose
-      const subtreeNodes = getSubtreeNodes(nodes, node);
-      const currentVisibility = getCurrentSubtreeVisibility(visibilityTree, subtreeNodes);
-      const nextVisibility = getNextVisibility(currentVisibility);
-      const nextState = setSubtreeVisibility(subtreeNodes, nodes, nextVisibility);
 
-      return nextState;
+      const nextVisibility = getNextSubtreeVisibility(visibilityTree, nodes, node);
+      const nextSubtreeVisibility = setSubtreeVisibility(nodes, node, visibilityTree, nextVisibility);
+
+      return nextSubtreeVisibility;
 
     default:
       return visibilityTree;
@@ -93,17 +212,22 @@ const visibilityReducer = (visibilityTree, action) => {
 const NodesTree = withReducer(
   'visibilityTree', 'dispatch', visibilityReducer, {},
   ({ visibilityTree, dispatch, nodes }) => {
-    console.log(visibilityTree);
 
     return (
       <div>
-        {nodes.map((node, index) => (
-          <PureNode
-            key={index}
-            {...node} open
-            cycleVisibility={() => dispatch(cycleSubtreeVisibility({ node, nodes }))}
-          />)
-        )}
+        {nodes.map((node, index) => {
+          const nodeVisibility = (visibilityTree[node.key] || NODE_HIDDEN);
+
+          if ( (nodeVisibility !== NODE_HIDDEN) || (index === 0) ) return (
+            <PureNode
+              key={index}
+              {...node} open={nodeVisibility === NODE_OPEN}
+              cycleVisibility={() => dispatch(cycleSubtreeVisibility({ node, nodes }))}
+            />
+          );
+
+          return null;
+        })}
       </div>
     );
   }
