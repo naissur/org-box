@@ -34,6 +34,14 @@ module.exports = {
     },{
       test: /\.json$/,
       loader: 'json'
-    }]
+    }],
+
+    postLoaders: [
+      {
+        test: /\.js$/,
+        include: path.join(__dirname, 'node_modules/org-mode-parser/lib/'),
+        loader: 'transform?brfs'
+      }
+    ]
   }
 };

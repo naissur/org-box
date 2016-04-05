@@ -42,11 +42,19 @@ export class App extends Component {
 
   render() {
     return (
-      <div style={{ fontFamily: 'sans-serif' }}>
+      <div>
+        <style>{`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'sans-serif' 
+          }
+        `}</style>
         <div>
           <UserInfo />
         </div>
-        <div style={{ }}>
+        <div>
           <div style={{ display: 'inline-block', verticalAlign: 'top', width: '20%' }} >
             <Directory />
           </div>

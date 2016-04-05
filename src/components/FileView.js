@@ -5,6 +5,9 @@ import { bindActionCreators } from 'redux'
 import { authorizeUser, userGetInfo } from '../actions/user';
 import { fileGet } from '../actions/file';
 
+import OrgFileView from './OrgFileView';
+import TextFileView from './TextFileView';
+
 
 /* eslint camelcase: 0 */
 
@@ -41,7 +44,7 @@ export default class FileView extends Component {
   }
 
   getContent() {
-    const { file, fileLoaded, fileLoading } = this.props;
+    const { file, fileName, fileLoaded, fileLoading } = this.props;
 
     if (!fileLoaded && !fileLoading) {
       return '';
@@ -51,11 +54,15 @@ export default class FileView extends Component {
       return 'Loading...';
     }
 
-    return file.split(/\n/).map((line, i) => (
-      <p key={i}>
-        { line }
-      </p>
-    ));
+    if (fileName.match(/\.org$/)) {
+      return (
+        <OrgFileView file={file} />
+      );
+    }
+
+    return (
+      <TextFileView file={file} />
+    );
   }
 
   render() {
@@ -71,7 +78,10 @@ export default class FileView extends Component {
         borderLeft: '1px solid #aaa',
         minHeight: '80vh'
       }}>
-        { this.getHeader() }
+        <div style={{ paddingBottom: '20px' }} >
+          { this.getHeader() }
+        </div>
+
         <div style={{
           fontFamily: 'monospace',
           paddingBottom: '100px'
