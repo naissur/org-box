@@ -12,7 +12,7 @@ export const authorize = () => {
   const params = {
     'response_type': 'token',
     'client_id': 'f1urc0vbuey95it',
-    'redirect_uri': 'http://localhost:3000'
+    'redirect_uri': 'https://org-box.com.s3-website-us-east-1.amazonaws.com/'
   };
 
   window.location = `https://www.dropbox.com/1/oauth2/authorize?${ queryString.stringify(params) }`

@@ -11,6 +11,11 @@ module.exports = {
     filename: 'bundle.js',
     publicPath: '/static/'
   },
+  node: {
+    net: 'empty',
+    tls: 'empty',
+    dns: 'empty'
+  },
   plugins: [
     new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.DefinePlugin({
@@ -29,6 +34,17 @@ module.exports = {
       test: /\.js$/,
       loaders: ['babel'],
       include: path.join(__dirname, 'src')
-    }]
+    },{
+      test: /\.json$/,
+      loader: 'json'
+    }],
+
+    postLoaders: [
+      {
+        test: /\.js$/,
+        include: path.join(__dirname, 'node_modules/org-mode-parser/lib/'),
+        loader: 'transform?brfs'
+      }
+    ]
   }
 };
