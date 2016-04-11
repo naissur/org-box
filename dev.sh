@@ -15,7 +15,7 @@ tmux send-keys 'Enter'
 
 # Source window
 tmux new-window -n src -t orgbox
-tmux send-keys 'cd src'
+tmux send-keys 'cd src' 'Enter'
 tmux send-keys 'clear' 'Enter'
 tmux send-keys 'vim'
 tmux send-keys 'Enter'
